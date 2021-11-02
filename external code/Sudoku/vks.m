@@ -1,25 +1,25 @@
-function c = vss(B);
-% VSS    Valid Sudoku Solution
-%     Check if the matrix B is a valid sudoku matrix
+function c = vks(B);
+% VSS    Valid Keen Solution
+%     Check if the matrix B is a valid keen matrix
 
-% Mike Rabbat, University of Wisconsin-Madison
+% Adapted from Mike Rabbat, University of Wisconsin-Madison
 % 8 November 2006
 % rabbat@cae.wisc.edu
 
-% Check that A is 9-by-9 matrix
+% Check that A is 6-by-6 matrix
 [n1, n2] = size(B);
-if ((n1 ~= 9) | (n2 ~= 9))
+if ((n1 ~= 6) | (n2 ~= 6))
    disp('B must be a 9-by-9 matrix');
 end
 
 % Initialize the probability matrix
-P = zeros(81,9);
+P = zeros(n1^2,n1);
 b = B(:);
-for i=1:81
+for i=1:n1^2
    if (b(i) > 0)
        P(i,b(i)) = 1;
    else
-       P(i,:) = 1/9;
+       P(i,:) = 1/n2;
    end
 end
 
@@ -47,31 +47,34 @@ I(16,:) = C(:,7)';
 I(17,:) = C(:,8)';
 I(18,:) = C(:,9)';
 % 3x3 block constraints
-% I(19,:) = reshape(C(1:3,1:3),1,9);
+I(19,:) = reshape(C(1:3,1:3),1,9);
 I(20,:) = reshape(C(1:3,4:6),1,9);
 I(21,:) = reshape(C(1:3,7:9),1,9);
 I(22,:) = reshape(C(4:6,1:3),1,9);
 I(23,:) = reshape(C(4:6,4:6),1,9);
 I(24,:) = reshape(C(4:6,7:9),1,9);
-% I(25,:) = reshape(C(7:9,1:3),1,9);
-% I(26,:) = reshape(C(7:9,1:3),1,9);
-% I(27,:) = reshape(C(7:9,1:3),1,9);
+I(25,:) = reshape(C(7:9,1:3),1,9);
+I(26,:) = reshape(C(7:9,1:3),1,9);
+I(27,:) = reshape(C(7:9,1:3),1,9);
 
 % Check that each constraint yields a permutation matrix
 c = 0;
-for m=1:18
+for m=1:2*n2
    M = P(I(m,:),:);
-   if (~all(sum(M,1)==ones(1,9)))
-       c = c+1;
-   elseif (~all(sum(M,2)==ones(9,1)))
-       c = c+1;
+   
+   % not all rows sum to 1
+   if (~all(sum(M,1) == ones(1,9)))
+       c = c + 1;
+   % not all columns sum to 1
+   elseif (~all(sum(M,2) == ones(9,1)))
+       c = c + 1;
    end
 end
 
 if (nargout == 0)
    if (c == 0)
-       disp('This is a valid Sudoku grid');
+       disp('This is a valid Keen grid');
    else
-       disp('This is not a valid Sudoku grid');
+       disp('This is not a valid Keen grid');
    end
 end

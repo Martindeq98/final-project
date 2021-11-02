@@ -1,52 +1,57 @@
-function [B,P]=sudoku(A,P);
+function [B,P]=keen(A,P);
+
+% dimension fo the puzzle
+n = size(A, 1);
 
 % if only one argument is given (A)
 if nargin == 1;
     % initialize P, get A
-    P = zeros(81,9);
+    P = zeros(n^2, n);
     a = A(:);
-    for k = 1:81;
+    for k = 1:n^2;
         % all given entries, we put a 1
         if a(k) ~= 0
             P(k, a(k)) = 1;
         % all unknown entries, we give a 1 / n
         else
-            P(k,:) = 1/9;
+            P(k,:) = 1/n;
         end;
     end;
 end;
 
 % constraint matrix (each row is a constraint)
 C=[ % one of each 1 to 9 in each row
-    [1:9] + 9 * 0;
-    [1:9] + 9 * 1;
-    [1:9] + 9 * 2;
-    [1:9] + 9 * 3;
-    [1:9] + 9 * 4;
-    [1:9] + 9 * 5;
-    [1:9] + 9 * 6;
-    [1:9] + 9 * 7;
-    [1:9] + 9 * 8;
+    [1:n] + n * 0;
+    [1:n] + n * 1;
+    [1:n] + n * 2;
+    [1:n] + n * 3;
+    [1:n] + n * 4;
+    [1:n] + n * 5;
+    [1:n] + n * 6;
+    [1:n] + n * 7;
+    [1:n] + n * 8;
     % one of each 1 to 9 in each column
-    1:9:81;
-    2:9:81;
-    3:9:81;
-    4:9:81;
-    5:9:81;
-    6:9:81;
-    7:9:81;
-    8:9:81;
-    9:9:81;
-    % one of each 1 to 9 in each block
-    [1:3 10:12 19:21] + 3 * 0 + 27 * 0;
+    1:n:n^2;
+    2:n:n^2;
+    3:n:n^2;
+    4:n:n^2;
+    5:n:n^2;
+    6:n:n^2;
+    7:n:n^2;
+    8:n:n^2;
+    9:n:n^2;
+    % constraints must be satisfied
+    
+    % sum constraints
+%     [1:3 10:12 19:21] + 3 * 0 + 27 * 0;
     [1:3 10:12 19:21] + 3 * 1 + 27 * 0;
     [1:3 10:12 19:21] + 3 * 2 + 27 * 0;
     [1:3 10:12 19:21] + 3 * 0 + 27 * 1;
     [1:3 10:12 19:21] + 3 * 1 + 27 * 1;
-    [1:3 10:12 19:21] + 3 * 2 + 27 * 1;
-    [1:3 10:12 19:21] + 3 * 0 + 27 * 2;
-    [1:3 10:12 19:21] + 3 * 1 + 27 * 2;
-    [1:3 10:12 19:21] + 3 * 2 + 27 * 2];
+    [1:3 10:12 19:21] + 3 * 2 + 27 * 1;];
+%     [1:3 10:12 19:21] + 3 * 0 + 27 * 2;
+%     [1:3 10:12 19:21] + 3 * 1 + 27 * 2;
+%     [1:3 10:12 19:21] + 3 * 2 + 27 * 2];
 
 % initialize B to empty
 B = zeros(9);
@@ -54,10 +59,10 @@ B = zeros(9);
 % draw P
 imagesc(P');colormap(gray(256));axis('image');disp(['Press any key']);pause;
 
-% iterationg 10 million times over 27 constraints
+% iterationg 10 million times over 18 constraints
 for k = 1:10000000;
     % change constraint
-    c = 1 + mod(k,27);
+    c = 1 + mod(k,23);
 
     % for 100 iterations
     for l = 1:100;
@@ -75,6 +80,7 @@ for k = 1:10000000;
         [a, b] = max(P');
         B(:) = b;
 
+        disp(max(P'))
         % draw results
         imagesc(P');colormap(gray(256));axis('image');drawnow;
         
