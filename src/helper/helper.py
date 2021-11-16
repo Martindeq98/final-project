@@ -32,6 +32,25 @@ def generate_sem_data(length, n, A, P):
     
 	# Return series
     return series
+
+def generate_var_2(length, n, A, P):
+    
+    # Initialize series
+    series = np.array(np.zeros((length, n)))
+    
+    # Precalculate inverse
+    inv_P = np.linalg.inv(P)
+    
+	# precalculate B
+    B = np.matmul(inv_P, np.matmul(A, P))
+    
+    # Generate series
+    for t in range(1, length):
+		# First the randomness
+        series[t] = np.matmul(series[t - 1], B) + np.random.multivariate_normal(np.zeros(n), np.identity(n))
+    
+	# Return series
+    return series
 	
 def generate_var_data(length, n, A, P):
     
@@ -165,3 +184,17 @@ def C_3(variables):
         cost += np.linalg.norm(val - est, ord = 2) ** 2
 
     return cost / (length - 1) # + 0.01 * np.sum(np.abs(B)) # regularization
+
+def gen_P(n):
+    P = np.random.random((n, n))
+    
+    rsum = 0
+    csum = 0
+
+    while (np.any(np.round(rsum, 3) != 1)) | (np.any(np.round(csum, 3) != 1)):
+        P /= P.sum(0)
+        P = P / P.sum(1)[:, np.newaxis]
+        rsum = P.sum(1)
+        csum = P.sum(0)
+        
+    return P
