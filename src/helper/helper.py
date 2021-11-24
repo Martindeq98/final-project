@@ -198,3 +198,48 @@ def gen_P(n):
         csum = P.sum(0)
         
     return P
+	
+def generate_A(n, num_edges, low = 0.5, high = 2.0, tril = False):
+    edges = np.array([0.0] * (int(n * (n + 1) / 2) - num_edges -n * tril) + [1.0] * num_edges)
+    
+    edges[edges > 0] = (2 * np.random.randint(0, 2, size=(num_edges)) - 1) * np.random.uniform(low, high, num_edges)
+    np.random.shuffle(edges)
+    
+    A = np.zeros((n, n))
+    
+    A[np.tril_indices(n, - tril)] = edges
+    
+    return A
+	
+def is_dag(W_input):
+    n = np.shape(W_input)[0]
+    
+    W = W_input.copy()
+    # remove diagonal entries
+    np.fill_diagonal(W, 0)
+    
+    order, old_order = [], list(range(n))
+    
+    # for the number of elements
+    for i in range(n):
+        
+        # find a row that contains only zeros
+        for j in range(n - i):
+            # if we find a zero row (excl. diags)
+            if not W[j].any() != 0:
+                
+                # remove this row and column
+                W = np.delete(W, j, 0)
+                W = np.delete(W, j, 1)
+            
+                order.append(old_order[j])
+                old_order.remove(old_order[j])
+                
+                # go to next variable
+                break
+        
+            # if no zero row exist stop
+            elif i == n - 1:
+                return False
+            
+    return True, order
