@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize 
 from operator import itemgetter
+import scipy.stats as scistat
+import os
 
 ### generate data
 
@@ -208,6 +210,10 @@ def generate_A(n, num_edges, low = 0.5, high = 2.0, tril = False):
     A = np.zeros((n, n))
     
     A[np.tril_indices(n, - tril)] = edges
+	
+    for i in range(n):
+        if abs(A[i][i]) > 0.95:
+            A[i][i] = np.random.uniform(0.75, 0.95)
     
     return A
 	
@@ -243,3 +249,116 @@ def is_dag(W_input):
                 return False
             
     return True, order
+
+### Score a WAM given data X
+def score(X, W, W_true, printing = True, rounding = 3, is_sem = False):
+    """
+    Score the weighted adjacency matrix "W" against the true W, "W_true".
+    Two different score types:
+        - Structural: TPR, FPR, etc.
+        - Predictive: Loss.
+    """
+	
+    ## Structural
+    # TPR
+    truth_bin = W_true.copy()
+    truth_bin[truth_bin != 0] = 1
+
+    W_bin = W.copy()
+    W_bin[W_bin != 0] = 1
+
+    true_edges = np.flatnonzero(truth_bin)
+    pred_edges = np.flatnonzero(W_bin)
+    tpr = len(np.intersect1d(pred_edges, true_edges, assume_unique=True)) / max(len(true_edges), 1)
+
+    # TNR
+    true_non_edges = np.flatnonzero(truth_bin - 1)
+    pred_non_edges = np.flatnonzero(W_bin - 1)
+    tnr = len(np.intersect1d(pred_non_edges, true_non_edges, assume_unique=True)) / max(len(true_non_edges), 1)
+
+    # FPR
+    pred_false_edges = np.setdiff1d(pred_edges, true_edges)
+    fpr = len(pred_false_edges) / max(len(pred_edges), 1)
+
+    # Accuracy
+    acc = len(truth_bin[truth_bin == W_bin]) / max(len(truth_bin.flatten()), 1)
+    
+    
+    ## Predictive
+    mse = MSE(W, X, is_sem)
+	
+    rsquared = RSquared(W, X, is_sem)
+	
+    if printing:
+        print(f"True Positive Rate: {round(tpr, rounding)}.\nTrue Negative Rate: {round(tnr, rounding)}.\nFalse Prediction Rate: {round(fpr, rounding)}\nAccuracy: {round(acc, rounding)}.")
+        print("R-Squared:", round(rsquared, rounding))
+        print("Mean Squared Error:", round(mse, rounding))
+	
+    return tpr, tnr, fpr, acc, mse, rsquared
+
+def RSquared(W, X, is_sem = False):
+    """Compute R-Squared of matrix W on data X"""
+	
+    T, n = np.shape(X)
+		
+    if is_sem:
+        X_regress = np.kron(np.eye(n, dtype=float), X) @ W.T.reshape(n ** 2)
+        y_regress = X.T.reshape(T * n, 1) 
+        _, _, r_value, _, _ = scistat.linregress(X_regress, y_regress[:, 0])
+		
+        return r_value ** 2
+    else:
+        X_regress = np.kron(np.eye(n, dtype=float), X[:-1]) @ W.T.reshape(n ** 2)
+        y_regress = X[1:].T.reshape((T - 1) * n, 1) 
+        _, _, r_value, _, _ = scistat.linregress(X_regress, y_regress[:, 0])
+        
+        return r_value ** 2
+	
+    
+	
+def MSE(W, X, is_sem = False):
+    """Compute Mean Squared error of matrix W on data X."""
+    
+    if is_sem:
+        X_val = X
+        X_pred = X @ W
+    
+        return 1 / len(X_val) * np.linalg.norm(X_val - X_pred, 'f') ** 2
+    else:
+        X_val = X[1:]
+        X_pred = X[:-1] @ W
+    
+        return 1 / len(X_val) * np.linalg.norm(X_val - X_pred, 'f') ** 2
+	
+def save_data(X, W, misc, expl, directory = ""):
+    """Saves dataset X, matrix W"""
+    
+    ## The name of the dataset X is as follows:
+    # n: Number of variables
+    # T: number of samples (timesteps) per variable
+    n, T = np.shape(X)
+    
+    ## The ground truth W (need not be the best!)
+    # s: Number of edges
+    s = len(W[W != 0])
+        
+    identifier = 0
+    name = f"X_s{s}_n{n}_T{T}_{misc}_{identifier}"
+    path = f"C:/Users/s165048/OneDrive - TU Eindhoven/QuinceyFinalProject/final-project/data/generated_data/{directory}{name}"
+            
+    while os.path.exists(f"{path}.txt"): 
+        identifier += 1
+        name = f"X_s{s}_n{n}_T{T}_{misc}_{identifier}"
+        path = f"C:/Users/s165048/OneDrive - TU Eindhoven/QuinceyFinalProject/final-project/data/generated_data/{directory}{name}"
+    
+    np.savetxt(f"{path}.txt", (W, X, expl), fmt='%s')
+    np.savez(path, W=W, X=X, expl=expl)
+    
+    print(f"Dataset saved with name {name}.")
+
+def load_data(name, directory = ""):
+    if name[-4:] == '.npz':
+        name = name[:-4]
+    path = f"C:/Users/s165048/OneDrive - TU Eindhoven/QuinceyFinalProject/final-project/data/generated_data/{directory}/{name}.npz"
+    data = np.load(path)
+    return data['W'], data['X'], data['expl']
