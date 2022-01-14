@@ -10,12 +10,13 @@ from sklearn.linear_model import OrthogonalMatchingPursuit
 from tqdm import tqdm
 import statsmodels.api as sm
 
-# Notears method
+# Notears method, old in week 12
 import sys
 path = "C:/Users/s165048/OneDrive - TU Eindhoven/QuinceyFinalProject/final-project/src/Week 12/notears/notears"
 sys.path.append(path)
 import linear
 
+# notears method, new in main directory ("src/notears/...")
 sys.path.append("..")
 import notears.notears.notears.linear as linear2
 
