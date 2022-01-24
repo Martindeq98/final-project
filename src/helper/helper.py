@@ -259,8 +259,13 @@ def score(X, W, W_true, printing = True, rounding = 3, is_sem = False):
         - Predictive: Loss.
     """
 	
-    ## Structural
-    # TPR
+    # length of diagonal
+    n = np.shape(W)[0]
+	
+    ### Structural
+    ## TPR
+	# Ratio of detected ground truth positives over ground truth positives
+	
     truth_bin = W_true.copy()
     truth_bin[truth_bin != 0] = 1
 
@@ -271,19 +276,24 @@ def score(X, W, W_true, printing = True, rounding = 3, is_sem = False):
     pred_edges = np.flatnonzero(W_bin)
     tpr = len(np.intersect1d(pred_edges, true_edges, assume_unique=True)) / max(len(true_edges), 1)
 
-    # TNR
+    ## TNR
+	# Ratio of detected ground truth negatives over ground truth negatives
     true_non_edges = np.flatnonzero(truth_bin - 1)
     pred_non_edges = np.flatnonzero(W_bin - 1)
     tnr = len(np.intersect1d(pred_non_edges, true_non_edges, assume_unique=True)) / max(len(true_non_edges), 1)
 
-    # FPR
+    ## FPR
     pred_false_edges = np.setdiff1d(pred_edges, true_edges)
     fpr = len(pred_false_edges) / max(len(pred_edges), 1)
 
     # Accuracy
-    acc = len(truth_bin[truth_bin == W_bin]) / max(len(truth_bin.flatten()), 1)
+	## Ratio of detected ground truths over ground truths
+    acc = (len(truth_bin[truth_bin == W_bin]) - is_sem * n) / max(len(truth_bin.flatten()) - is_sem * n, 1)
     
-    
+	## Structural Hamming Distance
+	# Distance between true and incorrect
+    shd = len(truth_bin[truth_bin != W_bin])
+	
     ## Predictive
     mse = MSE(W, X, is_sem)
 	
@@ -294,7 +304,7 @@ def score(X, W, W_true, printing = True, rounding = 3, is_sem = False):
         print("R-Squared:", round(rsquared, rounding))
         print("Mean Squared Error:", round(mse, rounding))
 	
-    return tpr, tnr, fpr, acc, mse, rsquared
+    return tpr, tnr, fpr, acc, shd, mse, rsquared
 
 def RSquared(W, X, is_sem = False):
     """Compute R-Squared of matrix W on data X"""
