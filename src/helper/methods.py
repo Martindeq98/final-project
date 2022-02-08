@@ -329,6 +329,8 @@ def _OMP_2(X, Y, max_coefs = int(1e10), tol = 0.0, verbose = False, output = Fal
     # output
     Ws, mses, max_gains = [], [], []
     
+    mses.append(1 / T * np.linalg.norm(Y - X @ np.zeros((n, n)), 'f') ** 2)
+	
     # initialize beta
     W = np.zeros((n, n))
     
@@ -521,6 +523,7 @@ def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, ou
         
         # set forbidden set to -1, impossible to pick then
         gains = gains.flatten()
+		
         gains[F] = - np.ones(len(F))
         gains = gains.reshape(n, n)
 		
@@ -531,7 +534,8 @@ def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, ou
         # append best atom to Lambda
 		# if tie, pick the one that minimizes residual
         row, col = np.argmax(gains) // n, np.argmax(gains) % n
-        Lambda[col].append(row)
+		
+        if row not in Lambda[col]: Lambda[col].append(row)
     
         # check if we have a DAG, not super efficient
         if h.is_dag(Lambda_to_adj(Lambda)): 
@@ -541,7 +545,7 @@ def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, ou
         
             # speedup: add transpose to forbidden set
             F.append(col * n + row)
-			
+
             # update betas        	
             betas[np.array(idx)[:, None], col] = np.linalg.inv(Psi_F) @ K[np.array(idx)[:, None], col]
             
