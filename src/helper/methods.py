@@ -529,6 +529,7 @@ def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, ou
 		
         #print(gains.max())
 		# stopping criterion
+        # print(np.round(gains.max(), 1), end = "\t")
         if np.round(gains, 8).max() <= tol: break
 		
         # append best atom to Lambda
@@ -548,6 +549,9 @@ def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, ou
 
             # update betas        	
             betas[np.array(idx)[:, None], col] = np.linalg.inv(Psi_F) @ K[np.array(idx)[:, None], col]
+			
+            # print(np.round(betas[row][col], 1), end = "\t")
+            # if np.abs(betas[row][col]) <= tol: break
             
         else:
             # append forbidden entry to forbidden list
