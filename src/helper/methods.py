@@ -507,7 +507,7 @@ def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, ou
     Psi = X.T.dot(X)  					# p times p
     K = X.T.dot(Y)	  					# p  times p
     Theta = [y.T.dot(y) for y in Y.T] 	# 1 times 1
-    
+	
     # initialize Lambda, idx, betas
     Lambda, idx, betas = [[] for _ in range(n)], [], np.zeros((n, n))
     
@@ -552,6 +552,104 @@ def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, ou
 			
             # print(np.round(betas[row][col], 1), end = "\t")
             # if np.abs(betas[row][col]) <= tol: break
+            if len(np.nonzero(betas)[0]) >= max_coefs: break
+            
+        else:
+            # append forbidden entry to forbidden list
+            F.append(int(np.argmax(gains)))
+            # remove coefficient from Lambda
+            Lambda[col].remove(row)
+    
+		# check residual squared
+        # print(sum([Theta[i] - K[:, i] @ betas[:, i] for i in range(n)]))
+		
+        if sum([Theta[i] - K[:, i] @ betas[:, i] for i in range(n)]) < tol_res:
+            print("Residual Limit, terminate")
+            break
+		
+        # print info if verbose
+        if verbose:
+            print(f"Iteration {i + 1}.\n")
+            print(f"Gains:\n{np.round(gains, 3)}.\n")
+            print(f"Beta_{i + 1}:\n{np.round(betas, 3)}.\n")
+            print(f"Residual Squared: {np.round([Theta[i] - K[:, i] @ betas[:, i] for i in range(n)], 32)}.\n\n")
+
+    return betas, sum([Theta[i] - K[:, i] @ betas[:, i] for i in range(n)])
+	
+def _K_OMP_output(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, output = False, normalize = False, F = [], is_sem = False):
+    """Do Kernel OMP on X, Y."""
+	
+    def Lambda_to_adj(Lambda):
+        """Convert Lambda list to adjacency matrix"""
+        n = len(Lambda)
+    
+        adj_mat = np.zeros((n, n))
+    
+        for i, col in enumerate(Lambda):
+            adj_mat[i, col] = 1 
+    
+        return adj_mat
+    
+	# get dimensions
+    T, n = np.shape(X)
+	
+    if is_sem: F = [i * (n + 1) for i in range(n)]
+    
+	# compute kernel spaces
+    Psi = X.T.dot(X)  					# p times p
+    K = X.T.dot(Y)	  					# p  times p
+    Theta = [y.T.dot(y) for y in Y.T] 	# 1 times 1
+
+	
+    # initialize Lambda, idx, betas
+    Lambda, idx, betas = [[] for _ in range(n)], [], np.zeros((n, n))
+    
+	# compute norms if we want to normalize
+    norms = [1] * n # initialize as harmless 1 array	
+    if normalize: norms = [np.linalg.norm(x) for x in X.T]
+	
+    Ws = []
+	
+    # for each possible coefficient
+    for i in range(n ** 2):    
+    
+        # compute gains
+        gains = np.abs([(k - betas.T @ Psi[i, :]) / norms[i] for i, k in enumerate(K)])
+        
+        # set forbidden set to -1, impossible to pick then
+        gains = gains.flatten()
+		
+        gains[F] = - np.ones(len(F))
+        gains = gains.reshape(n, n)
+		
+        #print(gains.max())
+		# stopping criterion
+        # print(np.round(gains.max(), 1), end = "\t")
+        if np.round(gains, 8).max() <= tol: break
+		
+        # append best atom to Lambda
+		# if tie, pick the one that minimizes residual
+        row, col = np.argmax(gains) // n, np.argmax(gains) % n
+		
+        if row not in Lambda[col]: Lambda[col].append(row)
+    
+        # check if we have a DAG, not super efficient
+        if h.is_dag(Lambda_to_adj(Lambda)): 
+            # update only column col, use indices of 
+            idx = Lambda[col]
+            Psi_F = Psi[np.array(idx)[:, None], np.array(idx)[None, :]]
+        
+            # speedup: add transpose to forbidden set
+            F.append(col * n + row)
+
+            # update betas        	
+            betas[np.array(idx)[:, None], col] = np.linalg.inv(Psi_F) @ K[np.array(idx)[:, None], col]
+			
+            Ws.append(betas.copy())
+			
+            # print(np.round(betas[row][col], 1), end = "\t")
+            # if np.abs(betas[row][col]) <= tol: break
+            if len(np.nonzero(betas)[0]) >= max_coefs: break
             
         else:
             # append forbidden entry to forbidden list
@@ -573,4 +671,4 @@ def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, ou
             print(f"Beta_{i + 1}:\n{np.round(betas, 3)}.\n")
             print(f"Residual Squared: {np.round([Theta[i] - K[:, i] @ betas[:, i] for i in range(n)], 32)}.\n\n")
 
-    return betas, sum([Theta[i] - K[:, i] @ betas[:, i] for i in range(n)])
+    return betas, Ws, sum([Theta[i] - K[:, i] @ betas[:, i] for i in range(n)])

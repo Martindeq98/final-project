@@ -54,6 +54,22 @@ def generate_var_2(length, n, A, P):
 	# Return series
     return series
 	
+def generate_var_res(T, W, residuals):
+    
+    # Initialize series
+    p = np.shape(W)[0]
+    series = np.array(np.zeros((T, p)))
+    R = np.shape(residuals)[0]
+	
+    # Generate series
+    for t in range(1, T):
+		# First the randomness
+        residual = np.array([residuals[np.random.choice(R), i] for i in range(p)])
+        series[t] = series[t - 1] @ W + residual
+    
+	# Return series
+    return series
+	
 def generate_var_data(length, n, A, P):
     
     # Initialize series
