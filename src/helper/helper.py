@@ -232,6 +232,19 @@ def generate_A(n, num_edges, low = 0.5, high = 2.0, tril = False):
             A[i][i] = np.random.uniform(0.75, 0.95)
     
     return A
+
+def generate_A_2(n, num_edges, low = 0.5, high = 2.0, tril = False):
+    edges = np.array([0.0] * int(n ** 2 - num_edges - n) + [1.0] * num_edges)
+    
+    edges[edges > 0] = (2 * np.random.randint(0, 2, size=(num_edges)) - 1) * np.random.uniform(low, high, num_edges)
+    np.random.shuffle(edges)
+    
+    print(len(edges))
+    A = np.zeros((n, n))
+    A[np.tril_indices(n, -1)] = edges[:len(edges) // 2]
+    A[np.triu_indices(n, 1)] = edges[len(edges) // 2:]
+    
+    return A
 	
 def is_dag(W_input):
     n = np.shape(W_input)[0]
@@ -388,3 +401,28 @@ def load_data(name, directory = ""):
     path = f"C:/Users/s165048/OneDrive - TU Eindhoven/QuinceyFinalProject/final-project/data/generated_data/{directory}/{name}.npz"
     data = np.load(path)
     return data['W'], data['X'], data['expl']
+	
+def gen_var(W, T):
+    p = np.shape(W)[0]
+    noises = np.zeros((2 * T, p))
+    
+    X = np.zeros((2 * T, p))
+    X[0] = np.random.multivariate_normal(np.zeros(p), np.identity(p))
+    
+    noises[1:] = np.random.multivariate_normal(np.zeros(p), np.identity(p), 2 * T - 1)
+    
+    for t in range(1, 2 * T):
+        X[t] = X[t - 1] @ W + noises[t]
+        
+    return X[T:]
+
+def gen_var_noises(W, T, noises):
+    p = np.shape(W)[0]
+    
+    X = np.zeros((T, p))
+    X[0] = noises[0]
+    
+    for t in range(1, T):
+        X[t] = X[t - 1] @ W + noises[t]
+
+    return X
