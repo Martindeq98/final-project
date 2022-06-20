@@ -1,0 +1,12 @@
+notears
+SHD: 64, Empirial Risk: 517.21, True Risk: 181.698.
+SHD: 90, Empirial Risk: 189.661, True Risk: 85.207.
+SHD: 15, Empirial Risk: 119.182, True Risk: 62.817.
+SHD: 62, Empirial Risk: 2361.11, True Risk: 281.786.
+SHD: 114, Empirial Risk: 4133.567, True Risk: 450.099.
+SHD: 37, Empirial Risk: 368.188, True Risk: 70.786.
+SHD: 90, Empirial Risk: 3622.468, True Risk: 243.426.
+SHD: 30, Empirial Risk: 475.264, True Risk: 55.019.
+SHD: 20, Empirial Risk: 252.568, True Risk: 51.44.
+SHD: 24, Empirial Risk: 59.122, True Risk: 51.009.
+overDone! Took 18865.011647939682 seconds.

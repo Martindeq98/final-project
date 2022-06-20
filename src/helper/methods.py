@@ -962,7 +962,7 @@ def _OMP_SEM(X, max_coefs = int(1e10), tol = 0.0, verbose = False, output = Fals
     # if we do not care about output, we only return betas
     return W
 	
-def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, output = False, normalize = False, F = [], is_sem = False):
+def _K_OMP(X, Y, max_coefs = 1e10, tol = 0.0, tol_res = 0.0, verbose = False, output = False, normalize = False, F = [], is_sem = False, normalize_2 = False):
     """Do Kernel OMP on X, Y."""
 	
     def Lambda_to_adj(Lambda):
