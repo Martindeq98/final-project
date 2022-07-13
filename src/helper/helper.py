@@ -332,6 +332,7 @@ def score(X, W, W_true, printing = True, rounding = 3, is_sem = False):
         print(f"True Positive Rate: {round(tpr, rounding)}.\nTrue Negative Rate: {round(tnr, rounding)}.\nFalse Prediction Rate: {round(fpr, rounding)}\nAccuracy: {round(acc, rounding)}.")
         print("R-Squared:", round(rsquared, rounding))
         print("Mean Squared Error:", round(mse, rounding))
+        print("SHD:", round(shd, rounding))
 	
     return tpr, tnr, fpr, acc, shd, mse, rsquared
 
